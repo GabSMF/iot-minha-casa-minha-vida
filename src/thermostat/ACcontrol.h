@@ -25,4 +25,8 @@ namespace acCmd {
 };
 
 const uint16_t IRled = 4;
-IRac ar_condicionado(IRled);
+extern IRac ar_condicionado;
+
+void setup_AC();
+void loop_protocolos(acCmd::Command *comando);
+void send_coolix(acCmd::Command *comando);
