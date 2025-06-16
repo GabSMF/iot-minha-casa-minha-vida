@@ -34,7 +34,7 @@ def set_mqtt_credentials(mqttc):
     if user and pwd:
         mqttc.username_pw_set(user, pwd)
     else:
-        print("No MQTT credentials provided; attempting anonymous connection")
+        print("No MQTT credentials provided!")
 
 # ----- Setup MQTT -----
 
