@@ -3,6 +3,7 @@
 #include "EInkPaper.h"
 
 unsigned long antes, agora = 0;
+stdAc::state_t estado;
 
 void setup() {
     Serial.begin(115200);
@@ -11,11 +12,8 @@ void setup() {
     setup_AC();
     setup_EInk();
 
-    fontes.setFont(u8g2_font_helvB24_te);
-    fontes.setFontMode(1);
-    fontes.setCursor(0, 50);
-    fontes.print("Eu odeio led IR");
-    tela.display(true);
+    estado = ar_condicionado.getState();
+    draw_current_state(&(estado));
 }
 
 void loop() {
