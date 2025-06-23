@@ -22,7 +22,18 @@ void draw_borders() {
 }
 
 void draw_fan_speed(stdAc::fanspeed_t vel) {
-    
+    if (vel == stdAc::fanspeed_t::kAuto) {
+        fontes.setCursor(190, 65);
+        fontes.print("FAN AUTO");
+    }
+    else {
+        int xcoord = 190, ycoord = 70;
+        for (int i = 1; i<=(int)vel; i++) {
+            tela.fillRect(xcoord, ycoord, 10, 75-ycoord, GxEPD_BLACK);
+            xcoord += 15;
+            ycoord -= 5;
+        }
+    }
 }
 
 void draw_current_state(stdAc::state_t *estado) {
