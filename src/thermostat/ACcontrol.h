@@ -2,6 +2,7 @@
 #include <IRremoteESP8266.h>
 #include <IRac.h>
 #include <IRutils.h>
+#include <Preferences.h>
 
 enum class commandType {
     Power,
@@ -26,6 +27,7 @@ namespace acCmd {
 
 const uint16_t IRled = 4;
 extern IRac ar_condicionado;
+extern Preferences ACpreferences;
 
 void setup_AC();
 void loop_protocolos(acCmd::Command *comando);

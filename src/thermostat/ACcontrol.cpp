@@ -1,14 +1,19 @@
 #include "ACcontrol.h"
 
 IRac ar_condicionado(IRled);
+Preferences ACpreferences;
 
 void setup_AC() {
     ar_condicionado.next.protocol = decode_type_t::DAIKIN;  // Set a protocol to use.
     ar_condicionado.next.model = 1;  // Some A/Cs have different models. Try just the first.
-    ar_condicionado.next.mode = stdAc::opmode_t::kCool;  // Run in cool mode initially.
+    ar_condicionado.next.mode = static_cast<stdAc::opmode_t>(
+        ACpreferences.getInt("modo", 1) // Run in cool mode initially.
+    );  
     ar_condicionado.next.celsius = true;  // Use Celsius for temp units. False = Fahrenheit
-    ar_condicionado.next.degrees = 25;  // 25 degrees.
-    ar_condicionado.next.fanspeed = stdAc::fanspeed_t::kAuto;  // Start the fan at medium.
+    ar_condicionado.next.degrees = ACpreferences.getFloat("temperatura", 25.0);  // 25 degrees.
+    ar_condicionado.next.fanspeed = static_cast<stdAc::fanspeed_t>(
+        ACpreferences.getInt("ventilador", 3) // Start the fan at medium.
+    );  
     ar_condicionado.next.swingv = stdAc::swingv_t::kOff;  // Don't swing the fan up or down.
     ar_condicionado.next.swingh = stdAc::swingh_t::kOff;  // Don't swing the fan left or right.
     ar_condicionado.next.light = false;  // Turn off any LED/Lights/Display that we can.
@@ -20,7 +25,7 @@ void setup_AC() {
     ar_condicionado.next.sleep = -1;  // Don't set any sleep time or modes.
     ar_condicionado.next.clean = false;  // Turn off any Cleaning options if we can.
     ar_condicionado.next.clock = -1;  // Don't set any current time if we can avoid it.
-    ar_condicionado.next.power = false;  // Initially start with the unit off.
+    ar_condicionado.next.power = ACpreferences.getBool("power", false);  // Initially start with the unit off.
 }
 
 void loop_protocolos(acCmd::Command *comando) {

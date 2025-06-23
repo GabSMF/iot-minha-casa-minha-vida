@@ -9,6 +9,8 @@ void setup() {
     Serial.begin(115200);
     delay(2000);
 
+    ACpreferences.begin("ac_pref");
+
     setup_AC();
     setup_EInk();
 

@@ -28,7 +28,7 @@ void draw_fan_speed(stdAc::fanspeed_t vel) {
     }
     else {
         int xcoord = 190, ycoord = 70;
-        for (int i = 1; i<=(int)vel; i++) {
+        for (int i = 1; i <= static_cast<int>(vel); i++) {
             tela.fillRect(xcoord, ycoord, 10, 75-ycoord, GxEPD_BLACK);
             xcoord += 15;
             ycoord -= 5;
