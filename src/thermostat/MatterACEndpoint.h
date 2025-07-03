@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <Matter.h>
 #include <MatterEndPoint.h>
+#include "ACcontrol.h"
 
 uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode);
 uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode);

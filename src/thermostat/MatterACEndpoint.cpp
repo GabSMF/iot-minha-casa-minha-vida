@@ -1,5 +1,4 @@
 #include "MatterACEndpoint.h"
-#include "ACcontrol.h"
 
 using namespace esp_matter;
 using namespace esp_matter::cluster;
@@ -23,6 +22,7 @@ uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode) {
         default:
             return chip::to_underlying(Thermostat::SystemModeEnum::kOff); // Fallback
     }
+    return 0;
 }
 
 uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode) {
@@ -40,6 +40,7 @@ uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode) {
         case stdAc::fanspeed_t::kMax:
             return chip::to_underlying(FanControl::FanModeEnum::kHigh);
     }
+    return 0;
 }
 
 MatterAC::MatterAC() {}
@@ -51,6 +52,12 @@ bool MatterAC::addFanControlCluster() {
     fan_config.fan_mode = _fanMode;
     fan_config.percent_setting = _fanSpeedPercent;
     _fan_control_cluster = fan_control::create(_matterEndpoint, &fan_config, CLUSTER_FLAG_SERVER);
+
+    if (!_fan_control_cluster) {
+        Serial.println("Falha ao criar cluster de ventilador.");
+        return false;
+    }
+    return true;
 }
 
 bool MatterAC::begin() {
@@ -95,7 +102,7 @@ bool MatterAC::begin() {
         return false;
     }
 
-    // TODO: Sincronizar atributos
+    // @todo: Sincronizar atributos
 
     Serial.println("Ar condicionado Matter criado com endpoint_id "+String(getEndPointId()));
     started = true;
