@@ -128,3 +128,13 @@ bool MatterAC::attributeChangeCB(uint16_t endpoint_id, uint32_t cluster_id, uint
     }
     return false;   // se chegou aqui, o cluster-alvo é desconhecido...
 }
+
+void MatterAC::handleOnOffChange(bool newState) {
+    _isOn = newState;
+
+    acCmd::Command comando;
+    comando.tipo = commandType::Power;
+    comando.instrucao.ligar = _isOn;
+
+    loop_protocolos(&comando);  // ligar ou desligar ar condicionado!
+}
