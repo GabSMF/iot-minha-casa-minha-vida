@@ -5,6 +5,23 @@ using namespace esp_matter::cluster;
 using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
+stdAc::opmode_t convertOpmodeMatterToIRremote(uint8_t MatterOpmode) {
+    switch(MatterOpmode) {
+        case chip::to_underlying(Thermostat::SystemModeEnum::kOff):
+            return stdAc::opmode_t::kOff;
+        case chip::to_underlying(Thermostat::SystemModeEnum::kCool):
+            return stdAc::opmode_t::kCool;
+        case chip::to_underlying(Thermostat::SystemModeEnum::kDry):
+            return stdAc::opmode_t::kDry;
+        case chip::to_underlying(Thermostat::SystemModeEnum::kFanOnly):
+            return stdAc::opmode_t::kFan;
+        case chip::to_underlying(Thermostat::SystemModeEnum::kAuto):
+            return stdAc::opmode_t::kCool;
+        default:
+            return stdAc::opmode_t::kAuto;  // Fallback
+    }
+}
+
 uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode) {
     switch (IRopmode) {
         case stdAc::opmode_t::kOff:
@@ -20,7 +37,7 @@ uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode) {
         case stdAc::opmode_t::kAuto:
             return chip::to_underlying(Thermostat::SystemModeEnum::kAuto);
         default:
-            return chip::to_underlying(Thermostat::SystemModeEnum::kOff); // Fallback
+            return chip::to_underlying(Thermostat::SystemModeEnum::kAuto); // Fallback
     }
     return 0;
 }
@@ -36,7 +53,7 @@ stdAc::fanspeed_t convertFanmodeMatterToIRremote(uint8_t MatterFanmode) {
         case chip::to_underlying(FanControl::FanModeEnum::kHigh):
             return stdAc::fanspeed_t::kHigh;
         default:
-            return stdAc::fanspeed_t::kAuto;
+            return stdAc::fanspeed_t::kAuto;    // Fallback
     }   
 }
 
@@ -55,7 +72,7 @@ uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode) {
         case stdAc::fanspeed_t::kMax:
             return chip::to_underlying(FanControl::FanModeEnum::kHigh);
         default:
-            return chip::to_underlying(FanControl::FanModeEnum::kAuto);
+            return chip::to_underlying(FanControl::FanModeEnum::kAuto);     // Fallback
     }
     return 0;
 }
@@ -89,7 +106,8 @@ bool MatterAC::begin() {
     room_air_conditioner::config_t ac_config;
     stdAc::state_t estado_atual = ar_condicionado.getState();
     ac_config.on_off.on_off = _isOn;
-    ac_config.thermostat.local_temperature = (uint16_t)(_currentTemperature * 100);
+    ac_config.thermostat.cooling.occupied_cooling_setpoint = (uint16_t)(_currentTemperature * 100);
+    ac_config.thermostat.heating.occupied_heating_setpoint = ac_config.thermostat.cooling.occupied_cooling_setpoint;
     ac_config.thermostat.system_mode = _thermostatMode;
     ac_config.thermostat.control_sequence_of_operation = chip::to_underlying(Thermostat::ControlSequenceOfOperationEnum::kCoolingAndHeating);
 
@@ -188,7 +206,7 @@ void MatterAC::handleFanControlChange(uint32_t attribute_id, esp_matter_attr_val
         stdAc::fanspeed_t vel_ventilador;
 
         // Mapeando porcentagens de velocidade da Alexa para valores do Enum do Ar Condicionado.
-        if (_fanSpeedPercent == 0) {
+        if (_fanSpeedPercent <= 1) {
             vel_ventilador = stdAc::fanspeed_t::kMin;
         }
         else if (_fanSpeedPercent <= 35) {
@@ -209,5 +227,35 @@ void MatterAC::handleFanControlChange(uint32_t attribute_id, esp_matter_attr_val
         comando.instrucao.vel_ventilador = vel_ventilador;
 
         loop_protocolos(&comando);  // mudar velocidade a partir de porcentagem!
+    }
+}
+
+/*
+    TEMPERATURA;
+    MODO DE OPERAÇÃO DO AC.
+*/
+void MatterAC::handleThermostatChange(uint32_t attribute_id, esp_matter_attr_val_t *val) {
+    if (attribute_id == Thermostat::Attributes::OccupiedCoolingSetpoint::Id ||
+        attribute_id == Thermostat::Attributes::OccupiedHeatingSetpoint::Id) {  // O Matter diferencia Temp. de aquecimento e resfriamento.
+        uint16_t temperatura_raw = val->val.u16;
+        float temperatura_nova = temperatura_raw / 100.0f; 
+        _currentTemperature = temperatura_nova;
+
+        acCmd::Command comando;
+        comando.tipo = commandType::Temperature;
+        comando.instrucao.temperatura = temperatura_nova;
+
+        loop_protocolos(&comando);  // mudar temperatura!!
+    }
+    else if (attribute_id == Thermostat::Attributes::SystemMode::Id) {
+        uint8_t modo_raw = val->val.u8;
+        _thermostatMode = modo_raw;
+        stdAc::opmode_t modo_novo = convertOpmodeMatterToIRremote(modo_raw);
+
+        acCmd::Command comando;
+        comando.tipo = commandType::OpMode;
+        comando.instrucao.modo_operacao = modo_novo;
+
+        loop_protocolos(&comando);  // mudar modo de operação!
     }
 }
