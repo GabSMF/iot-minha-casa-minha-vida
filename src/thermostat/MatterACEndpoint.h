@@ -8,6 +8,7 @@
 #include "ACcontrol.h"
 
 uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode);
+stdAc::fanspeed_t convertFanmodeMatterToIRremote(uint8_t MatterFanmode);
 uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode);
 
 class MatterAC : public MatterEndPoint {

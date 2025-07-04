@@ -6,7 +6,7 @@ using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
 uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode) {
-    switch (static_cast<stdAc::opmode_t>(IRopmode)) {
+    switch (IRopmode) {
         case stdAc::opmode_t::kOff:
             return chip::to_underlying(Thermostat::SystemModeEnum::kOff);
         case stdAc::opmode_t::kCool:
@@ -25,8 +25,23 @@ uint8_t convertOpmodeIRremoteToMatter(stdAc::opmode_t IRopmode) {
     return 0;
 }
 
+stdAc::fanspeed_t convertFanmodeMatterToIRremote(uint8_t MatterFanmode) {
+    switch (MatterFanmode) {
+        case chip::to_underlying(FanControl::FanModeEnum::kAuto):
+            return stdAc::fanspeed_t::kAuto;
+        case chip::to_underlying(FanControl::FanModeEnum::kLow):
+            return stdAc::fanspeed_t::kLow;
+        case chip::to_underlying(FanControl::FanModeEnum::kMedium):
+            return stdAc::fanspeed_t::kMedium;
+        case chip::to_underlying(FanControl::FanModeEnum::kHigh):
+            return stdAc::fanspeed_t::kHigh;
+        default:
+            return stdAc::fanspeed_t::kAuto;
+    }   
+}
+
 uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode) {
-    switch (static_cast<stdAc::fanspeed_t>(IRfanmode)) {
+    switch (IRfanmode) {
         case stdAc::fanspeed_t::kAuto:
             return chip::to_underlying(FanControl::FanModeEnum::kAuto);
         case stdAc::fanspeed_t::kMin:
@@ -39,13 +54,17 @@ uint8_t convertFanmodeIRremoteToMatter(stdAc::fanspeed_t IRfanmode) {
             return chip::to_underlying(FanControl::FanModeEnum::kHigh);
         case stdAc::fanspeed_t::kMax:
             return chip::to_underlying(FanControl::FanModeEnum::kHigh);
+        default:
+            return chip::to_underlying(FanControl::FanModeEnum::kAuto);
     }
     return 0;
 }
 
 MatterAC::MatterAC() {}
 
-MatterAC::~MatterAC() {end();}
+MatterAC::~MatterAC() {
+    end();
+}
 
 bool MatterAC::addFanControlCluster() {
     fan_control::config_t fan_config;
@@ -61,7 +80,7 @@ bool MatterAC::addFanControlCluster() {
 }
 
 bool MatterAC::begin() {
-    if (getEndPointId() != 0) {
+    if (getEndPointId() != 0 || started) {
         Serial.println("AC Matter já foi criado!");
         return false;
     }
@@ -75,7 +94,7 @@ bool MatterAC::begin() {
     ac_config.thermostat.control_sequence_of_operation = chip::to_underlying(Thermostat::ControlSequenceOfOperationEnum::kCoolingAndHeating);
 
     // Criar endpoint Matter
-    endpoint_t *_matterEndpoint = room_air_conditioner::create(node::get(), &ac_config, ENDPOINT_FLAG_NONE, (void*) this);
+    _matterEndpoint = room_air_conditioner::create(node::get(), &ac_config, ENDPOINT_FLAG_NONE, (void*) this);
     if (_matterEndpoint == nullptr) {
         Serial.println("Falha ao criar endpoint do AC");
         return false;
@@ -136,6 +155,9 @@ bool MatterAC::attributeChangeCB(uint16_t endpoint_id, uint32_t cluster_id, uint
     return false;   // se chegou aqui, o cluster-alvo é desconhecido...
 }
 
+/*
+    LIGA/DESLIGA.
+*/
 void MatterAC::handleOnOffChange(bool newState) {
     _isOn = newState;
 
@@ -144,4 +166,48 @@ void MatterAC::handleOnOffChange(bool newState) {
     comando.instrucao.ligar = _isOn;
 
     loop_protocolos(&comando);  // ligar ou desligar ar condicionado!
+}
+
+/*
+    VELOCIDADE DO VENTILADOR (FanMode <-> fanspeed_t);
+    PORCENTAGEM DE VELOCIDADE.
+*/
+void MatterAC::handleFanControlChange(uint32_t attribute_id, esp_matter_attr_val_t *val) {
+    if (attribute_id == FanControl::Attributes::FanMode::Id) {
+        _fanMode = val->val.u8;
+        stdAc::fanspeed_t vel_ventilador = convertFanmodeMatterToIRremote(_fanMode);
+
+        acCmd::Command comando;
+        comando.tipo = commandType::FanSpeed;
+        comando.instrucao.vel_ventilador = vel_ventilador;
+
+        loop_protocolos(&comando);  // mudar velocidade!
+    }
+    else if (attribute_id == FanControl::Attributes::PercentSetting::Id) {
+        _fanSpeedPercent = val->val.u8;
+        stdAc::fanspeed_t vel_ventilador;
+
+        // Mapeando porcentagens de velocidade da Alexa para valores do Enum do Ar Condicionado.
+        if (_fanSpeedPercent == 0) {
+            vel_ventilador = stdAc::fanspeed_t::kMin;
+        }
+        else if (_fanSpeedPercent <= 35) {
+            vel_ventilador = stdAc::fanspeed_t::kLow;
+        }
+        else if (_fanSpeedPercent <= 65) {
+            vel_ventilador = stdAc::fanspeed_t::kMedium;
+        }
+        else if (_fanSpeedPercent <= 99) {
+            vel_ventilador = stdAc::fanspeed_t::kHigh;
+        }
+        else {
+            vel_ventilador = stdAc::fanspeed_t::kMax;
+        }
+
+        acCmd::Command comando;
+        comando.tipo = commandType::FanSpeed;
+        comando.instrucao.vel_ventilador = vel_ventilador;
+
+        loop_protocolos(&comando);  // mudar velocidade a partir de porcentagem!
+    }
 }
