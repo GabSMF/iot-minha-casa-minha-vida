@@ -1,9 +1,13 @@
 #include <Arduino.h>
 #include "ACcontrol.h"
 #include "EInkPaper.h"
+#include "MatterACEndpoint.h"
+#include "WiFiComms.h"
 
 unsigned long antes, agora = 0;
 stdAc::state_t estado;
+
+MatterAC ac_matter;
 
 void setup() {
     Serial.begin(115200);
@@ -13,6 +17,10 @@ void setup() {
 
     setup_AC();
     setup_EInk();
+    ac_matter.begin();
+
+    Matter.begin();
+    recomissionarMatter();
 
     estado = ar_condicionado.getState();
     draw_current_state(&(estado));
@@ -28,4 +36,6 @@ void loop() {
         antes = agora;
         loop_protocolos(&comando);
     }
+
+    recomissionarMatter();
 }
