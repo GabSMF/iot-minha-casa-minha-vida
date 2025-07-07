@@ -28,6 +28,10 @@ void setup() {
     
     setup_AC();
     setup_EInk();
+
+    ac_matter.onChangeCoolingSetpoint(mudouTemperaturaAC);
+    ac_matter.onChangeHeatingSetpoint(mudouTemperaturaAC);
+    ac_matter.onChangeMode(mudouModoAC);
     ac_matter.begin();
 
     //Matter.begin();
