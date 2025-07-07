@@ -1,5 +1,7 @@
 #include "WiFiComms.h"
 
+Preferences WiFiPreferences;
+
 void recomissionarMatter() {
     if (!Matter.isDeviceCommissioned()) {
         Serial.print("Código de pareamento: ");
@@ -14,5 +16,22 @@ void recomissionarMatter() {
             delay(1000);
         }
         Serial.println("\nConectado no ambiente Matter!");
+    }
+}
+
+void reconectarWiFi() {
+    if (WiFi.status() != WL_CONNECTED) {
+        String name, password;
+        name = WiFiPreferences.getString("wifiname", "Projeto");
+        password = WiFiPreferences.getString("wifipass", "2022-11-07");
+        WiFi.begin(name, password);
+
+        Serial.println("Conectando ao WiFi...");
+        while (WiFi.status() != WL_CONNECTED) {
+            Serial.print(".");
+            delay(1000);
+        }
+        Serial.print("conectado!\nEndereço IP: ");
+        Serial.println(WiFi.localIP());
     }
 }

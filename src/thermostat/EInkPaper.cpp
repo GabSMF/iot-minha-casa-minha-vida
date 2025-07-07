@@ -101,4 +101,5 @@ void draw_current_state(stdAc::state_t *estado) {
     }
 
     tela.display(true);
+    Serial.println("Tela Atualizada");
 }

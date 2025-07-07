@@ -52,7 +52,7 @@ void loop_protocolos(acCmd::Command *comando) {
                 break;
         }
 
-        Serial.println("Enviando comando a um ar condicionado "+typeToString(protocolo));
+        //Serial.println("Enviando comando a um ar condicionado "+typeToString(protocolo));
         ar_condicionado.next = estado;
         ar_condicionado.sendAc();
     }
