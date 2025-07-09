@@ -2,12 +2,15 @@
 
 #include "ACcontrol.h"
 #include "certificados.h"
+#include "EInkPaper.h"
 #include <Matter.h>
 #include <MQTT.h>
+#include <ArduinoJson.h>
 #include <Preferences.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 
+extern MatterThermostat ac_matter;
 extern Preferences WiFiPreferences; 
 extern WiFiClientSecure conexaoSegura;
 extern MQTTClient mqtt;
@@ -27,3 +30,6 @@ void setupSecureClient();
 void setupMQTT();
 void reconectarMQTT();
 void recebeuMensagem(String topico, String conteudo);
+
+// Geral
+void changeDetectedCB();

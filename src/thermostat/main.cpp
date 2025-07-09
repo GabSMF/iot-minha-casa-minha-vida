@@ -9,8 +9,6 @@ stdAc::state_t estado;
 
 GFButton botao(48);
 
-MatterThermostat ac_matter;
-
 void botaoApertado(GFButton& botao) {
     Serial.println("Olá! Fui apertado!");
 }
@@ -34,7 +32,7 @@ void setup() {
     ac_matter.onChangeCoolingSetpoint(mudouTemperaturaAC);
     ac_matter.onChangeHeatingSetpoint(mudouTemperaturaAC);
     ac_matter.onChangeMode(mudouModoAC);
-    ac_matter.begin(MatterThermostat::THERMOSTAT_SEQ_OP_COOLING_HEATING, MatterThermostat::THERMOSTAT_AUTO_MODE_ENABLED);
+    ac_matter.begin(MatterThermostat::THERMOSTAT_SEQ_OP_COOLING_HEATING, MatterThermostat::THERMOSTAT_AUTO_MODE_DISABLED);
 
     Matter.begin();
     recomissionarMatter();

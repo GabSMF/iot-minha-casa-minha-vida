@@ -26,7 +26,7 @@ void setup_AC() {
     ar_condicionado.next.sleep = -1;  // Don't set any sleep time or modes.
     ar_condicionado.next.clean = false;  // Turn off any Cleaning options if we can.
     ar_condicionado.next.clock = -1;  // Don't set any current time if we can avoid it.
-    ar_condicionado.next.power = ACpreferences.getBool("power", false);  // Initially start with the unit off.
+    ar_condicionado.next.power = ACpreferences.getBool("power", true);  // Initially start with the unit on                                                             
 }
 
 void loop_protocolos(acCmd::Command *comando) {

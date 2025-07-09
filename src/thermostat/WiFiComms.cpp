@@ -1,5 +1,6 @@
 #include "WiFiComms.h"
 
+MatterThermostat ac_matter;
 Preferences WiFiPreferences;
 WiFiClientSecure conexaoSegura;
 MQTTClient mqtt(1000);
@@ -22,10 +23,12 @@ void recomissionarMatter() {
 }
 
 bool mudouTemperaturaAC(double temp_nova) {
+    ac_matter.setLocalTemperature(temp_nova);
     acCmd::Command comando;
     comando.tipo = commandType::Temperature;
-    comando.instrucao.temperatura = temp_nova;
+    comando.instrucao.temperatura = (float)temp_nova;
     loop_protocolos(&comando);
+    changeDetectedCB();
     return true;
 }
 
@@ -61,6 +64,7 @@ bool mudouModoAC(MatterThermostat::ThermostatMode_t modo_novo) {
             return false;
     }
     loop_protocolos(&comando);
+    changeDetectedCB();
     return true;
 }
 
@@ -87,7 +91,6 @@ void setupSecureClient() {
 
 void setupMQTT() {
     mqtt.begin("mqtt.janks.dev.br", 8883, conexaoSegura);
-    // @todo MESSAGE: ON RECEIVE CALLBACK
     mqtt.setKeepAlive(10);
     mqtt.setWill("dead", "Desconectado por inatividade.");
     
@@ -104,6 +107,138 @@ void reconectarMQTT() {
         }
         Serial.println(" conectado!");
 
-        mqtt.subscribe("topicosample");
+        mqtt.subscribe("/updates");
+        mqtt.subscribe("/preferencias");
     }
+}
+
+void recebeuMensagem(String topico, String conteudo) {
+    if (topico == "/updates" && conteudo == "1") {
+        mqtt.publish("id_dispositivo", "1");
+        changeDetectedCB();       
+    } 
+    else if (topico == "/preferencias" && conteudo == "1") {
+        JsonDocument dados;
+        deserializeJson(dados, conteudo);
+
+        stdAc::state_t estado_novo = ar_condicionado.getState();
+
+        // temperatura
+        if (dados[0]["ar_temperatura"] != NULL) {
+            float ar_temperatura = (float) dados[0]["ar_temperatura"];
+            estado_novo.degrees = ar_temperatura;
+            double tempdbl = (double) ar_temperatura;
+            // avisando o matter
+            ac_matter.setCoolingHeatingSetpoints(tempdbl, tempdbl);
+            ac_matter.setLocalTemperature(tempdbl);
+        }
+
+        // modo
+        if (dados[0]["ar_modo"] != NULL) {
+            String ar_modo = String(dados[0]["ar_modo"]);
+            if (ar_modo == "aquecimento") {
+                estado_novo.mode = stdAc::opmode_t::kHeat;
+                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_HEAT);
+            }
+            else if (ar_modo == "secar") {
+                estado_novo.mode = stdAc::opmode_t::kDry;
+                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_DRY);
+            }
+            else if (ar_modo == "resfriar") {
+                estado_novo.mode = stdAc::opmode_t::kCool;
+                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_COOL);
+            }
+            else if (ar_modo == "ventilar") {
+                estado_novo.mode = stdAc::opmode_t::kFan;
+                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_FAN_ONLY);
+            }
+            else if (ar_modo == "auto") {
+                estado_novo.mode = stdAc::opmode_t::kAuto;
+                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_AUTO);
+            }
+        }
+
+        // fanspeed
+        if (dados[0]["ar_velocidade"] != NULL) {
+            String ar_velocidade = String(dados[0]["ar_velocidade"]);
+            if (ar_velocidade == "min") {
+                estado_novo.fanspeed = stdAc::fanspeed_t::kMin;
+            }
+            else if (ar_velocidade == "med"){
+                estado_novo.fanspeed = stdAc::fanspeed_t::kMedium;
+            }
+            else if (ar_velocidade == "max"){
+                estado_novo.fanspeed = stdAc::fanspeed_t::kMax;
+            }
+            else if (ar_velocidade == "auto"){
+                estado_novo.fanspeed = stdAc::fanspeed_t::kAuto;
+            }
+        }
+
+        // ENVIA O COMANDO NESSA PORRA
+        Serial.println("Enviando comando a um ar condicionado COOLIX");
+        ar_condicionado.next = estado_novo;
+        draw_current_state(&estado_novo);
+        ar_condicionado.sendAc();
+    }
+}
+
+// QUANDO RECEBER UPDATE DO SERVIDOR DE PREFERENCIAS
+void changeDetectedCB() {
+    JsonDocument jLeitura;
+    String leitura;
+    stdAc::state_t estado = ar_condicionado.getState();
+
+    jLeitura["id_dispositivo"] = "1";
+    jLeitura["temperaturaAr"] = estado.degrees;
+    switch(estado.mode) {
+        case stdAc::opmode_t::kAuto:
+            jLeitura["modoAr"] = "auto";
+            break;
+        case stdAc::opmode_t::kDry:
+            jLeitura["modoAr"] = "secar";
+            break;
+        case stdAc::opmode_t::kCool:
+            jLeitura["modoAr"] = "resfriar";
+            break;
+        case stdAc::opmode_t::kHeat:
+            jLeitura["modoAr"] = "aquecimento";
+            break;
+        case stdAc::opmode_t::kFan:
+            jLeitura["modoAr"] = "ventilar";
+            break;
+        default:
+            jLeitura["modoAr"] = "auto";
+            break;
+    }
+    switch(estado.fanspeed) {
+        case stdAc::fanspeed_t::kMin:
+            jLeitura["velocidadeAr"] = "min";
+            break;
+        case stdAc::fanspeed_t::kHigh:
+            jLeitura["velocidadeAr"] = "max";
+            break;
+        case stdAc::fanspeed_t::kMax:
+            jLeitura["velocidadeAr"] = "max";
+            break;
+        case stdAc::fanspeed_t::kLow:
+            jLeitura["velocidadeAr"] = "min";
+            break;
+        case stdAc::fanspeed_t::kMedium:
+            jLeitura["velocidadeAr"] = "med";
+            break;
+        case stdAc::fanspeed_t::kMediumHigh:
+            jLeitura["velocidadeAr"] = "med";
+            break;
+        case stdAc::fanspeed_t::kAuto:
+            jLeitura["velocidadeAr"] = "auto";
+            break;
+        default:
+            jLeitura["velocidadeAr"] = "auto";
+            break;
+    }
+    jLeitura["powerAr"] = estado.power;
+
+    serializeJson(jLeitura, leitura);
+    mqtt.publish("/leituraAr", leitura);
 }
