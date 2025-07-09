@@ -1,0 +1,156 @@
+{% extends 'base.html' %} {% block title %}Configuração do Sensor BME680{% endblock %} {% block content %}
+<style>
+  .content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+    padding: 20px;
+    height: calc(100vh - 120px);
+    gap: 20px;
+  }
+  .card {
+    flex: 1 1 calc(50% - 20px);
+    max-width: 50%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .form-group {
+    margin: 10px 0;
+    text-align: left;
+    width: 100%;
+  }
+  .form-group label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #61005b;
+  }
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  .submit-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #61005b;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .submit-button:hover {
+    background-color: #45003d;
+  }
+  .card h3 {
+    color: #61005b;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .tooltip {
+    display: inline-block;
+    margin-left: 5px;
+    background-color: #61005b;
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 20px;
+    cursor: pointer;
+  }
+  .tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    background-color: #61005b;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+  .floating-save-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 30px;
+    background-color: #61005b;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .floating-save-button:hover {
+    background-color: #45003d;
+  }
+</style>
+
+<div class="content">
+  <!-- Card para Configuração do Sensor -->
+  <div class="card">
+    <h3>Configuração do Sensor BME680</h3>
+    <form id="sensor-config-form" method="POST">
+      <!-- Nível de Precisão -->
+      <div class="form-group">
+        <label for="oversampling">
+          Nível de Precisão:
+          <span class="tooltip" title="Define quantas medições o sensor realiza antes de calcular o valor final. Valores maiores aumentam a precisão ao reduzir o ruído, mas consomem mais energia e tempo.">
+            ?
+          </span>
+        </label>
+        <select id="oversampling" name="oversampling">
+          <option value="1" {{ 'selected' if preferences.sensor_oversampling == '1' else '' }}>x1 (Baixa precisão)</option>
+          <option value="2" {{ 'selected' if preferences.sensor_oversampling == '2' else '' }}>x2</option>
+          <option value="4" {{ 'selected' if preferences.sensor_oversampling == '4' else '' }}>x4</option>
+          <option value="8" {{ 'selected' if preferences.sensor_oversampling == '8' else '' }}>x8</option>
+          <option value="16" {{ 'selected' if preferences.sensor_oversampling == '16' else '' }}>x16 (Alta precisão)</option>
+        </select>
+      </div>
+
+      <!-- Estabilidade dos Dados -->
+      <div class="form-group">
+        <label for="iir-filter">
+          Estabilidade dos Dados:
+          <span class="tooltip" title="Aplica um filtro para suavizar os dados de pressão e temperatura. Valores maiores tornam os dados mais estáveis, mas menos responsivos a mudanças rápidas.">
+            ?
+          </span>
+        </label>
+        <select id="iir-filter" name="iir-filter">
+          <option value="off" {{ 'selected' if preferences.sensor_iir == 'off' else '' }}>Off (Sem filtro)</option>
+          <option value="3" {{ 'selected' if preferences.sensor_iir == '3' else '' }}>2</option>
+          <option value="7" {{ 'selected' if preferences.sensor_iir == '7' else '' }}>4</option>
+          <option value="15" {{ 'selected' if preferences.sensor_iir == '15' else '' }}>8</option>
+          <option value="31" {{ 'selected' if preferences.sensor_iir == '31' else '' }}>16 (Maior estabilidade)</option>
+          <option value="63" {{ 'selected' if preferences.sensor_iir == '63' else '' }}>16 (Maior estabilidade)</option>
+          <option value="127" {{ 'selected' if preferences.sensor_iir == '127' else '' }}>16 (Maior estabilidade)</option>       
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Botão flutuante para salvar -->
+<button class="floating-save-button" onclick="document.getElementById('sensor-config-form').submit();">
+  Salvar
+</button>
+{% endblock %}

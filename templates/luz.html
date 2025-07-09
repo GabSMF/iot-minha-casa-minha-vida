@@ -1,0 +1,133 @@
+{% extends 'base.html' %} {% block title %}Luz{% endblock %} {% block content %}
+<style>
+  .content {
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+    padding: 20px;
+    height: calc(100vh - 120px); 
+  }
+  #luz-config-form {
+    display: flex;
+    justify-content: space-evenly; 
+    align-items: stretch; 
+    width: 100%;
+    max-width: 1200px;
+    gap: 20px;
+  }
+  .card {
+    flex: 1 1 calc(25% - 20px); 
+    max-width: calc(25% - 20px);
+    min-height: 100%; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .card label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #61005b;
+  }
+  .card input[type="range"],
+  .card input[type="radio"] {
+    margin-top: 10px;
+  }
+  .card input[type="radio"] {
+    margin-right: 5px;
+  }
+  .floating-save-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 30px;
+    background-color: #61005b;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .floating-save-button:hover {
+    background-color: #45003d;
+  }
+</style>
+
+<div class="content">
+  <form id="luz-config-form" method="POST">
+    <!-- Interruptor para ligar/desligar -->
+    <div class="card switch-container">
+      <label>Acendida/Apagada</label>
+      <input
+        type="checkbox"
+        id="switch"
+        name="switch"
+        {%
+        if
+        preferences.luz_acesa
+        %}checked{%
+        endif
+        %}
+      />
+    </div>
+
+    <!-- Bola de cor para selecionar a cor -->
+    <div class="card color-picker-container">
+      <label for="color">Selecione a Cor:</label>
+      <input
+        type="color"
+        id="color"
+        name="color"
+        value="{{ preferences.luz_cor or '#ffffff' }}"
+      />
+    </div>
+
+    <!-- Slider para intensidade -->
+    <div class="card slider-container">
+      <label for="intensity">Intensidade da Luz:</label>
+      <input
+        type="range"
+        id="intensity"
+        name="intensity"
+        min="0"
+        max="100"
+        value="{{ preferences.luz_intensidade or 50 }}"
+      />
+    </div>
+
+    <!-- Radio buttons para modos -->
+    <div class="card checkbox-container">
+      <label>Modos:</label>
+      <label>
+        <input type="radio" id="modo1" name="modo" value="relaxar" {{ 'checked'
+        if preferences.luz_modo == 'relaxar' else '' }} /> Modo Relaxar
+      </label>
+      <label>
+        <input type="radio" id="modo2" name="modo" value="foco" {{ 'checked' if
+        preferences.luz_modo == 'foco' else '' }} /> Modo Foco
+      </label>
+      <label>
+        <input type="radio" id="modo3" name="modo" value="festa" {{ 'checked' if
+        preferences.luz_modo == 'festa' else '' }} /> Modo Festa
+      </label>
+    </div>
+  </form>
+</div>
+
+<!-- Botão flutuante para salvar -->
+<button
+  class="floating-save-button"
+  onclick="document.getElementById('luz-config-form').submit();"
+>
+  Salvar
+</button>
+{% endblock %}

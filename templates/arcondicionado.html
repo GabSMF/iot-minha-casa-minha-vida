@@ -1,0 +1,164 @@
+{% extends 'base.html' %} {% block title %}Ar-Condicionado{% endblock %} {%
+block content %}
+<script>
+  function updateTemperature(value) {
+    document.getElementById("temperature-display").textContent = value + "°C";
+  }
+</script>
+
+<style>
+  .content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    height: calc(100vh - 120px);
+  }
+  #arcondicionado-config-form {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: stretch; 
+    width: 100%;
+    max-width: 1200px;
+    gap: 20px; 
+  }
+  .card {
+    flex: 1 1 calc(25% - 20px);
+    max-width: calc(25% - 20px);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .card label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #61005b;
+  }
+  .card input[type="range"],
+  .card input[type="radio"] {
+    margin-top: 10px;
+  }
+  .card input[type="radio"] {
+    margin-right: 5px;
+  }
+  .floating-save-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 30px;
+    background-color: #61005b;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .floating-save-button:hover {
+    background-color: #45003d;
+  }
+</style>
+
+<div class="content">
+  <form
+    id="arcondicionado-config-form"
+    method="POST"
+  >
+    <!-- Card para Temperatura -->
+    <div class="card slider-container">
+      <label for="intensity">Temperatura:</label>
+      <input
+        type="range"
+        id="intensity"
+        name="intensity"
+        min="16"
+        max="30"
+        value="{{ preferences.ar_temperatura or 22 }}"
+        oninput="updateTemperature(this.value)"
+      />
+      <span id="temperature-display"
+        >{{ preferences.ar_temperatura or 22 }}°C</span
+      >
+    </div>
+
+    <!-- Card para Direção -->
+    <div class="card checkbox-container">
+      <label>Direção:</label>
+      <label>
+        <input type="radio" id="direcao1" name="direcao" value="baixo" {% if
+        preferences.ar_direcao == 'baixo' %}checked{% endif %} /> Baixo
+      </label>
+      <label>
+        <input type="radio" id="direcao2" name="direcao" value="meio" {% if
+        preferences.ar_direcao == 'meio' %}checked{% endif %} /> Meio
+      </label>
+      <label>
+        <input type="radio" id="direcao3" name="direcao" value="cima" {% if
+        preferences.ar_direcao == 'cima' %}checked{% endif %} /> Cima
+      </label>
+    </div>
+
+    <!-- Card para Modos -->
+    <div class="card checkbox-container">
+      <label>Modos:</label>
+      <label>
+        <input type="radio" id="modo1" name="modoAr" value="refrigeracao" {% if
+        preferences.ar_modo == 'refrigeracao' %}checked{% endif %} />
+        Refrigeração
+      </label>
+      <label>
+        <input type="radio" id="modo2" name="modoAr" value="aquecimento" {% if
+        preferences.ar_modo == 'aquecimento' %}checked{% endif %} /> Aquecimento
+      </label>
+      <label>
+        <input type="radio" id="modo3" name="modoAr" value="automatico" {% if
+        preferences.ar_modo == 'automatico' %}checked{% endif %} /> Automático
+      </label>
+      <label>
+        <input type="radio" id="modo4" name="modoAr" value="desumidificação" {%
+        if preferences.ar_modo == 'desumidificação' %}checked{% endif %} />
+        Desumidificação
+      </label>
+      <label>
+        <input type="radio" id="modo5" name="modoAr" value="ventilacao" {% if
+        preferences.ar_modo == 'ventilacao' %}checked{% endif %} /> Ventilação
+      </label>
+    </div>
+
+    <!-- Card para Velocidades -->
+    <div class="card checkbox-container">
+      <label>Velocidades:</label>
+      <label>
+        <input type="radio" id="velocidade1" name="velocidade" value="fraca" {%
+        if preferences.ar_velocidade == 'fraca' %}checked{% endif %} /> Fraca
+      </label>
+      <label>
+        <input type="radio" id="velocidade2" name="velocidade" value="media" {%
+        if preferences.ar_velocidade == 'media' %}checked{% endif %} /> Média
+      </label>
+      <label>
+        <input type="radio" id="velocidade3" name="velocidade" value="forte" {%
+        if preferences.ar_velocidade == 'forte' %}checked{% endif %} /> Forte
+      </label>
+    </div>
+  </form>
+</div>
+
+<!-- Botão flutuante para salvar -->
+<button
+  class="floating-save-button"
+  onclick="document.getElementById('arcondicionado-config-form').submit();"
+>
+  Salvar
+</button>
+{% endblock %}

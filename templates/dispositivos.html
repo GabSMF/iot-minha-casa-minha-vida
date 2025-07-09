@@ -1,0 +1,180 @@
+{% extends 'base.html' %} {% block title %}Dispositivos{% endblock %} {% block
+content %}
+<style>
+  .device-list-container {
+    max-width: 600px;
+    margin: 40px auto 0 auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    padding: 30px 40px;
+  }
+  .device-list-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #61005b;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .device-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 30px;
+  }
+  .device-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+  }
+  .device-type {
+    font-size: 14px;
+    color: #888;
+    margin-left: 10px;
+  }
+  .delete-device-btn {
+    background: none;
+    border: none;
+    color: #b71c1c;
+    font-size: 22px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .delete-device-btn:hover {
+    color: #61005b;
+  }
+  .add-device-form {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    gap: 0;
+  }
+  .add-device-input {
+    padding: 8px;
+    font-size: 18px;
+    border-radius: 5px 0 0 5px;
+    border: 1px solid #ccc;
+    outline: none;
+    width: 350px;
+  }
+  .add-device-btn {
+    padding: 8px 16px;
+    font-size: 20px;
+    background: #61005b;
+    color: #fff;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  .add-device-btn:hover {
+    background: #45004d;
+  }
+  .error-message {
+    color: #b71c1c;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+</style>
+
+<div class="device-list-container">
+  <div class="device-list-title">Seus Dispositivos</div>
+  {% if error %}
+  <div class="error-message">{{ error }}</div>
+  {% endif %}
+  <ul class="device-list">
+    {% for dispositivo in dispositivos %}
+    <li class="device-item">
+      <span>
+        <strong>{{ dispositivo.nome or "Sem nome" }}</strong>
+        <span style="color: #aaa; font-size: 14px"
+          >({{ dispositivo.id_dispositivo }})</span
+        >
+        <span class="device-type">
+          ( {% if dispositivo.type == "arcondicionado" %} Ar-condicionado {%
+          elif dispositivo.type == "sensor" %} Sensor BME {% elif
+          dispositivo.type == "luz" %} Luz {% else %} {{ dispositivo.type }} {%
+          endif %} )
+        </span>
+      </span>
+      <form
+        method="POST"
+        action="{{ url_for('edit_device_name', id_dispositivo=dispositivo.id_dispositivo) }}"
+        style="display: inline; margin-right: 10px"
+      >
+        <input
+          type="text"
+          name="nome"
+          value="{{ dispositivo.nome or '' }}"
+          placeholder="Editar nome"
+          style="
+            width: 120px;
+            font-size: 15px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+          "
+        />
+        <button
+          type="submit"
+          style="
+            background: #61005b;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 10px;
+            margin-left: 2px;
+            font-size: 15px;
+            cursor: pointer;
+          "
+        >
+          Salvar
+        </button>
+      </form>
+      <form
+        method="POST"
+        action="{{ url_for('delete_device', id_dispositivo=dispositivo.id_dispositivo) }}"
+        style="display: inline"
+      >
+        <button
+          class="delete-device-btn"
+          type="submit"
+          title="Excluir dispositivo"
+        >
+          &#128465;
+        </button>
+      </form>
+    </li>
+    {% else %}
+    <li style="text-align: center; color: #888">
+      Nenhum dispositivo cadastrado.
+    </li>
+    {% endfor %}
+  </ul>
+  <form
+    class="add-device-form"
+    method="POST"
+    action="{{ url_for('add_device') }}"
+  >
+    <input
+      class="add-device-input"
+      type="text"
+      name="id_dispositivo"
+      placeholder="ID do Dispositivo"
+      required
+    />
+    <input
+      class="add-device-input"
+      style="border-radius: 0; margin-left: -1px; width: 200px"
+      type="text"
+      name="nome"
+      placeholder="Nome do Dispositivo"
+    />
+    <button class="add-device-btn" type="submit">+</button>
+  </form>
+</div>
+{% endblock %}

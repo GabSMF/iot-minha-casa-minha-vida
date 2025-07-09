@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}IoT System{% endblock %}</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        background-color: #61005b;
+        color: #fff;
+        text-align: center;
+        position: relative;
+        height: 70px;
+      }
+      .logout-btn {
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #fff;
+        color: #61005b;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.2s, color 0.2s;
+      }
+      .logout-btn:hover {
+        background-color: #e1bee7;
+        color: #45004d;
+      }
+      nav {
+        background-color: #45004d;
+        padding: 10px;
+        text-align: center;
+      }
+      nav a {
+        color: #fff;
+        text-decoration: none;
+        margin: 0 15px;
+        font-size: 18px;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    socket.on("preferences_updated", function (data) {
+      location.reload();
+    });
+  </script>
+  <body>
+    <header>
+      <h1>IoT - Preferences</h1>
+      {% if usuario %}
+        <a href="{{ url_for('dispositivos') }}">
+          <button class="logout-btn" style="right: 150px; background-color: #e1bee7; color: #61005b;">
+            Dispositivos
+          </button>
+        </a>
+        <a href="{{ url_for('logout') }}">
+          <button class="logout-btn">Logout</button>
+        </a>
+      {% endif %}
+    </header>
+    <nav>
+      <a href="/home">Home</a>
+      {% if usuario %} {% if dispositivo_arcondicionado %}
+      <a href="{{ url_for('arcondicionado') }}">Ar-condicionado</a>
+      {% endif %} {% if dispositivo_lampada %}
+      <a href="{{ url_for('luz') }}">Lâmpada</a>
+      {% endif %} {% if dispositivo_sensores %}
+      <a href="{{ url_for('sensores') }}">Sensores</a>
+      {% endif %} {% endif %}
+    </nav>
+    <div>{% block content %}{% endblock %}</div>
+  </body>
+</html>
