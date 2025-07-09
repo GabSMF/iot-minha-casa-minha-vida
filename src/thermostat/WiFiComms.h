@@ -14,3 +14,7 @@ bool mudouModoAC(MatterThermostat::ThermostatMode_t modo_novo);
 
 // WiFi
 void reconectarWiFi();
+
+// Certificados/HTTPS
+
+// MQTT

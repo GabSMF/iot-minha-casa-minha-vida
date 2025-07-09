@@ -1,4 +1,5 @@
 #include "ACcontrol.h"
+#include "EInkPaper.h"
 
 IRac ar_condicionado(IRled);
 Preferences ACpreferences;
@@ -52,8 +53,9 @@ void loop_protocolos(acCmd::Command *comando) {
                 break;
         }
 
-        //Serial.println("Enviando comando a um ar condicionado "+typeToString(protocolo));
+        Serial.println("Enviando comando a um ar condicionado "+typeToString(protocolo));
         ar_condicionado.next = estado;
+        draw_current_state(&estado);
         ar_condicionado.sendAc();
     }
 }
