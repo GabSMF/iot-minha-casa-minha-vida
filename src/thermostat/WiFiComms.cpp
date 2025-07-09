@@ -1,6 +1,8 @@
 #include "WiFiComms.h"
 
 Preferences WiFiPreferences;
+WiFiClientSecure conexaoSegura;
+MQTTClient mqtt(1000);
 
 void recomissionarMatter() {
     if (!Matter.isDeviceCommissioned()) {
@@ -76,5 +78,32 @@ void reconectarWiFi() {
         }
         Serial.print("conectado!\nEndereço IP: ");
         Serial.println(WiFi.localIP());
+    }
+}
+
+void setupSecureClient() {
+    conexaoSegura.setCACert(certificado1);
+}
+
+void setupMQTT() {
+    mqtt.begin("mqtt.janks.dev.br", 8883, conexaoSegura);
+    // @todo MESSAGE: ON RECEIVE CALLBACK
+    mqtt.setKeepAlive(10);
+    mqtt.setWill("dead", "Desconectado por inatividade.");
+    
+    reconectarMQTT();
+}
+
+void reconectarMQTT() {
+    if (!mqtt.connected()) {
+        Serial.print("Conectando MQTT...");
+        while (!mqtt.connected()) {
+            mqtt.connect("THERMOSTAT", "aula", "zowmad-tavQez");
+            Serial.print(".");
+            delay(1000);
+        }
+        Serial.println(" conectado!");
+
+        mqtt.subscribe("topicosample");
     }
 }

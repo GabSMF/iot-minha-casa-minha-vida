@@ -25,6 +25,8 @@ void setup() {
     WiFiPreferences.begin("wifi_pref");
 
     reconectarWiFi();
+    setupSecureClient();
+    setupMQTT();
     
     setup_AC();
     setup_EInk();
@@ -32,7 +34,7 @@ void setup() {
     ac_matter.onChangeCoolingSetpoint(mudouTemperaturaAC);
     ac_matter.onChangeHeatingSetpoint(mudouTemperaturaAC);
     ac_matter.onChangeMode(mudouModoAC);
-    ac_matter.begin();
+    ac_matter.begin(MatterThermostat::THERMOSTAT_SEQ_OP_COOLING_HEATING, MatterThermostat::THERMOSTAT_AUTO_MODE_ENABLED);
 
     Matter.begin();
     recomissionarMatter();
