@@ -19,6 +19,13 @@ void recomissionarMatter() {
     }
 }
 
+bool mudouTemperaturaAC(double temp_nova) {
+    acCmd::Command comando;
+    comando.tipo = commandType::Temperature;
+    comando.instrucao.temperatura = temp_nova;
+    loop_protocolos(&comando);
+}
+
 void reconectarWiFi() {
     if (WiFi.status() != WL_CONNECTED) {
         String name, password;

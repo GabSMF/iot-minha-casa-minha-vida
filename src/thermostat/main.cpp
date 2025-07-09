@@ -34,8 +34,8 @@ void setup() {
     ac_matter.onChangeMode(mudouModoAC);
     ac_matter.begin();
 
-    //Matter.begin();
-    //recomissionarMatter();
+    Matter.begin();
+    recomissionarMatter();
 
     estado = ar_condicionado.getState();
     draw_current_state(&(estado));
@@ -54,5 +54,5 @@ void loop() {
 
     botao.process();
     reconectarWiFi();
-    //recomissionarMatter();
+    recomissionarMatter();
 }
