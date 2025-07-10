@@ -45,4 +45,6 @@ void loop() {
     botao.process();
     reconectarWiFi();
     recomissionarMatter();
+    reconectarMQTT();
+    mqtt.loop();
 }

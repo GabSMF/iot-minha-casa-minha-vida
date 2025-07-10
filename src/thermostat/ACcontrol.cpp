@@ -5,7 +5,7 @@ IRac ar_condicionado(IRled);
 Preferences ACpreferences;
 
 void setup_AC() {
-    ar_condicionado.next.protocol = decode_type_t::DAIKIN;  // Set a protocol to use.
+    ar_condicionado.next.protocol = decode_type_t::COOLIX;  // Set a protocol to use.
     ar_condicionado.next.model = 1;  // Some A/Cs have different models. Try just the first.
     ar_condicionado.next.mode = static_cast<stdAc::opmode_t>(
         ACpreferences.getInt("modo", 1) // Run in cool mode initially.

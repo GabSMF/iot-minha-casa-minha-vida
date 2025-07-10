@@ -91,6 +91,7 @@ void setupSecureClient() {
 
 void setupMQTT() {
     mqtt.begin("mqtt.janks.dev.br", 8883, conexaoSegura);
+    mqtt.onMessage(recebeuMensagem);
     mqtt.setKeepAlive(10);
     mqtt.setWill("dead", "Desconectado por inatividade.");
     
@@ -113,73 +114,83 @@ void reconectarMQTT() {
 }
 
 void recebeuMensagem(String topico, String conteudo) {
+    Serial.println("topico");
+    Serial.println(topico);
+    Serial.println("conteudo");
+    Serial.println(conteudo);
     if (topico == "/updates" && conteudo == "1") {
+        Serial.println("Recebeu updates");
         mqtt.publish("id_dispositivo", "1");
         changeDetectedCB();       
     } 
-    else if (topico == "/preferencias" && conteudo == "1") {
+    else if (topico == "/preferencias") {
+        Serial.println("Recebeu preferencias e estou mudando!");
         JsonDocument dados;
         deserializeJson(dados, conteudo);
 
-        stdAc::state_t estado_novo = ar_condicionado.getState();
+        Serial.println("Conteudo:");
+        Serial.println(conteudo);
 
-        // temperatura
-        if (dados[0]["ar_temperatura"] != NULL) {
-            float ar_temperatura = (float) dados[0]["ar_temperatura"];
-            estado_novo.degrees = ar_temperatura;
-            double tempdbl = (double) ar_temperatura;
-            // avisando o matter
-            ac_matter.setCoolingHeatingSetpoints(tempdbl, tempdbl);
-            ac_matter.setLocalTemperature(tempdbl);
+        if (dados[0]["id_dispositivo"] == 1) {
+            stdAc::state_t estado_novo = ar_condicionado.next;
+            estado_novo.power = true;
+
+            // temperatura
+            if (dados[0]["ar_temperatura"] != NULL) {
+                float ar_temperatura = (float) dados[0]["ar_temperatura"];
+                estado_novo.degrees = ar_temperatura;
+                double tempdbl = (double) ar_temperatura;
+                // avisando o matter
+                ac_matter.setCoolingHeatingSetpoints(tempdbl, tempdbl);
+                ac_matter.setLocalTemperature(tempdbl);
+            }
+
+            // modo
+            if (dados[0]["ar_modo"] != NULL) {
+                String ar_modo = String(dados[0]["ar_modo"]);
+                if (ar_modo == "aquecimento") {
+                    estado_novo.mode = stdAc::opmode_t::kHeat;
+                    ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_HEAT);
+                }
+                else if (ar_modo == "desumidificação") {
+                    estado_novo.mode = stdAc::opmode_t::kDry;
+                    ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_DRY);
+                }
+                else if (ar_modo == "refrigeracao") {
+                    estado_novo.mode = stdAc::opmode_t::kCool;
+                    ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_COOL);
+                }
+                else if (ar_modo == "ventilacao") {
+                    estado_novo.mode = stdAc::opmode_t::kFan;
+                    ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_FAN_ONLY);
+                }
+                else if (ar_modo == "automatico") {
+                    estado_novo.mode = stdAc::opmode_t::kAuto;
+                    ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_AUTO);
+                }
+            }
+
+            // fanspeed
+            if (dados[0]["ar_velocidade"] != NULL) {
+                String ar_velocidade = String(dados[0]["ar_velocidade"]);
+                if (ar_velocidade == "fraca") {
+                    estado_novo.fanspeed = stdAc::fanspeed_t::kMin;
+                }
+                else if (ar_velocidade == "media"){
+                    estado_novo.fanspeed = stdAc::fanspeed_t::kMedium;
+                }
+                else if (ar_velocidade == "forte"){
+                    estado_novo.fanspeed = stdAc::fanspeed_t::kMax;
+                }
+            }
+
+            // ENVIA O COMANDO NESSA PORRA
+            Serial.println("Enviando comando a um ar condicionado COOLIX");
+            ar_condicionado.next = estado_novo;
+            draw_current_state(&estado_novo);
+            ar_condicionado.sendAc();
+            changeDetectedCB();
         }
-
-        // modo
-        if (dados[0]["ar_modo"] != NULL) {
-            String ar_modo = String(dados[0]["ar_modo"]);
-            if (ar_modo == "aquecimento") {
-                estado_novo.mode = stdAc::opmode_t::kHeat;
-                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_HEAT);
-            }
-            else if (ar_modo == "secar") {
-                estado_novo.mode = stdAc::opmode_t::kDry;
-                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_DRY);
-            }
-            else if (ar_modo == "resfriar") {
-                estado_novo.mode = stdAc::opmode_t::kCool;
-                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_COOL);
-            }
-            else if (ar_modo == "ventilar") {
-                estado_novo.mode = stdAc::opmode_t::kFan;
-                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_FAN_ONLY);
-            }
-            else if (ar_modo == "auto") {
-                estado_novo.mode = stdAc::opmode_t::kAuto;
-                ac_matter.setMode(MatterThermostat::ThermostatMode_t::THERMOSTAT_MODE_AUTO);
-            }
-        }
-
-        // fanspeed
-        if (dados[0]["ar_velocidade"] != NULL) {
-            String ar_velocidade = String(dados[0]["ar_velocidade"]);
-            if (ar_velocidade == "min") {
-                estado_novo.fanspeed = stdAc::fanspeed_t::kMin;
-            }
-            else if (ar_velocidade == "med"){
-                estado_novo.fanspeed = stdAc::fanspeed_t::kMedium;
-            }
-            else if (ar_velocidade == "max"){
-                estado_novo.fanspeed = stdAc::fanspeed_t::kMax;
-            }
-            else if (ar_velocidade == "auto"){
-                estado_novo.fanspeed = stdAc::fanspeed_t::kAuto;
-            }
-        }
-
-        // ENVIA O COMANDO NESSA PORRA
-        Serial.println("Enviando comando a um ar condicionado COOLIX");
-        ar_condicionado.next = estado_novo;
-        draw_current_state(&estado_novo);
-        ar_condicionado.sendAc();
     }
 }
 
